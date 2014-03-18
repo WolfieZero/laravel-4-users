@@ -16,4 +16,8 @@ Route::get('/', function()
 	return View::make('hello');
 });
 
-Route::controller('users', 'UsersController');
+Route::get('login', 'UsersController@getLogin');
+Route::post('login', 'UsersController@postLogin');
+Route::get('logout', 'UsersController@getLogout');
+
+Route::controller( 'users', 'UsersController', ['only' => ['dashboard']] );

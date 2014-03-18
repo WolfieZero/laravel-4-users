@@ -52,6 +52,43 @@ class UsersController extends \BaseController {
     }
 
 
+    public function postEdit() {
+
+        // Gets the current user object
+        $user = User::find(Auth::user()->id);
+        //dd($user->firstname, $user);
+
+        $user->firstname = Input::get('firstname');
+        $user->lastname  = Input::get('lastname');
+        $user->email     = Input::get('email');
+        $user->password  = Hash::make(Input::get('password'));
+        $user->location  = Input::get('location');
+
+        $user->save();
+
+            //set the name of the file
+            //$filename = Input::file('image.name');
+
+            //Upload the file
+            //Input::upload('image', 'public/uploads', $filename);
+
+
+            // Save the variable data back into the DB
+            //$user->save();
+
+            // Returns the login page
+/*            return Redirect::to('users/login')
+                ->with('message', 'Thanks for registering!')
+                ->with('message-type', 'success');*/
+
+        return Redirect::to('users/edit')
+            ->with('message', 'Your details have been updated')
+            ->with('message-type', 'success');
+
+
+    }
+
+
     /**
      * Lets the user logout
      *
@@ -70,8 +107,8 @@ class UsersController extends \BaseController {
     public function postCreate() {
 
         $validator = Validator::make(
-            Input::all(),  // Grabs user submitted form data
-            User::$rules   // Grabs validation rules from the `User` model
+            Input::all(),        // Grabs user submitted form data
+            User::$rules['new']  // Grabs validation rules from the `User` model
         );
 
         // Call `passes()` object to see if `Input::all()` validatates against
@@ -80,19 +117,14 @@ class UsersController extends \BaseController {
 
             // validation has passed, save user in DB
 
-            // Grab our `User` model and store it as `$user` to allow us to
-            // assign and use variables and ojbects
-            $user = new User;
-
-            // Get the input values based on the field names and store then in
-            // variables relating to the column names
-            $user->firstname = Input::get('firstname');
-            $user->lastname  = Input::get('lastname');
-            $user->email     = Input::get('email');
-            $user->password  = Hash::make(Input::get('password'));
-
-            // Save the variable data back into the DB
-            $user->save();
+            // Using `create()` we can directly save our variables into the DB
+            // so long as they are in the protected property `User::$fillable`
+            $user = User::create([
+                'firstname' => Input::get('firstname'),
+                'lastname'  => Input::get('lastname'),
+                'email'     => Input::get('email'),
+                'password'  => Hash::make(Input::get('password'))
+            ]);
 
             // Returns the login page
             return Redirect::to('users/login')
@@ -114,22 +146,49 @@ class UsersController extends \BaseController {
     }
 
 
-    public function postSignin() {
+    public function postLogin() {
 
-        if (Auth::attempt(array('email'=>Input::get('email'), 'password'=>Input::get('password')))) {
+        if( Auth::attempt([
+            'email'    => Input::get('email'),
+            'password' => Input::get('password')
+        ]) ) {
 
-            return Redirect::to('users/dashboard')
+            return Redirect::intended('users/dashboard')
                 ->with('message', 'You are now logged in!')
                 ->with('message-type', 'success');
 
         } else {
 
-            return Redirect::to('users/login')
+            return Redirect::to('login')
                 ->with('message', 'Your username/password combination was incorrect')
                 ->with('message-type', 'danger')
                 ->withInput();
 
         }
+
+    }
+
+
+    /**
+     * Gives the delete view
+     *
+     * @return  View
+     */
+    public function getDelete() {
+
+        $this->layout->content = View::make('users.delete');
+
+    }
+
+
+    public function postDelete() {
+
+        $user = User::find(Auth::user()->id);
+        $user->delete();
+
+        return Redirect::to('login')
+            ->with('message', 'User, ' . $user->firstname . ' has been deleted. Bye bye!')
+            ->with('message-type', 'success');
 
     }
 
